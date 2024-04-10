@@ -1,5 +1,4 @@
 #!/bin/bash
-# helpを作成
 function usage {
   cat <<EOM
 Usage: $(basename "$0") [OPTION]...
@@ -26,17 +25,40 @@ function bedrock_function {
 
 function vanilla_function {
     SERVER_TYPE="vanilla"
+    script_function
     version_function
 }
 
 function spigot_function {
     SERVER_TYPE="spigot"
+    script_function
     version_function
 }
 
 function paper_function {
     SERVER_TYPE="paper"
+    script_function
     version_function
+}
+
+function script_function {
+    echo '起動スクリプトを作成しますか？[y]'
+    read -p "[y/n]:" SCRIPT_YES
+    case "$SCRIPT_YES" in [nN]*)  ;; *) ram_function ;; esac
+}
+
+function ram_function {
+    SCRIPT_YES="yes"
+    read -p "サーバーのメモリ量[1024M]:" SERVER_RAM
+    if [ -n ${SERVER_RAM} ]; then
+        SERVER_RAM="1024M"
+    fi
+    allow_screem
+}
+function allow_screem {
+    echo 'Screenを使用しますか？[yes]'
+    read -p "[y/n]:" ALLOW_SCREEN
+    case "$SCRIPT_YES" in [nN]*)  ;; *) ALLOW_SCREEN="no" ;; esac
 }
 
 function version_function {
@@ -75,7 +97,6 @@ function dir_function {
 }
 
 function filename_function {
-    echo 'サーバーファイル'
     read -p "ファイル名[server]:" FILE_NAME
     if [ -n ${FILE_NAME} ]; then
         FILE_NAME="server"
@@ -91,11 +112,20 @@ function download_function {
     exit 2;
     elif [ ${GAME_TYPE} = "java" ]; then 
     wget ${URL} -O "${DIR_NAME}""/""${FILE_NAME}"".jar"
+    if [ ${ALLOW_SCREEN} = "no" ]; then
+    echo
+    else
+    make_script
+    fi
     # rm ${YAML_FILE}
     exit 2;
     else
         echo "error"
     fi
+}
+
+function make_script {
+    cat "cd ${DIR_NAME} && screen -UAmdS minecraft java -jar -Xms${SERVER_RAM} -Xmx${SERVER_RAM} server.jar nogui" > 'start.sh'
 }
 
 function server_type {
@@ -127,7 +157,15 @@ function install_function {
 
 YAML_FILE="temp.yaml"
 
-if type "   " > /dev/null 2>&1; then
+if type "yq" > /dev/null 2>&1; then
+    echo
+else
+    echo "必要なパッケージをインストールしてもよいですか？"
+    read -p "[y/n]:" ACCEPT_INSTALL
+    case "$ACCEPT_INSTALL" in [nN]*)  ;; *) install_function ;; esac
+fi
+
+if type "unzip" > /dev/null 2>&1; then
     echo
 else
     echo "必要なパッケージをインストールしてもよいですか？"
